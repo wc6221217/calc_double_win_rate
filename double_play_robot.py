@@ -9,11 +9,12 @@ import pandas as pd
 data_ls = []
 roomid = '188'
 
-double_data_play_ls = []
-double_data_robot_ls = []
+double_data_play_ls = []  # 人类数据 (192.168.102.45:2409)
+double_data_robot_ls = [] # 机器人数据 (192.168.102.45:2412)
 
 robot_version_data = {}
-new_jqr_uid = []
+robot_uid_time_dict = {}  # 存储机器人uid和时间
+human_uid_time_dict = {}  # 存储人类uid和时间
 
 # Define file paths
 log_file_path = r'.\\calc_double_win_rate\\PlayRecord20250526.log'
@@ -27,6 +28,7 @@ if not os.path.exists(log_file_path):
         print("Please make sure the file exists either in the 'calc_double_win_rate' directory or in the current directory.")
         exit(1)
 
+print("正在处理日志文件...")
 with open(log_file_path, "r", encoding='gb18030', errors='ignore') as res_file:
     next(res_file)
     for line in res_file:
@@ -46,11 +48,9 @@ with open(log_file_path, "r", encoding='gb18030', errors='ignore') as res_file:
         ai3 = fields[43]
         timestamp = fields[44]
 
-
         deposit1 = int(fields[13])
         deposit2 = int(fields[23])
         deposit3 = int(fields[33])
-
         
         #过滤掉有玩家参与的局
         if len(ai1)==0 or len(ai2)==0 or len(ai3)==0:
@@ -62,13 +62,24 @@ with open(log_file_path, "r", encoding='gb18030', errors='ignore') as res_file:
         if int(deposit1)==0:
             continue
 
-        # print(deposit1, deposit2, deposit3)
+        # 分类机器人和人类数据
+        # 机器人 (192.168.102.45:2412)
         if ai1 == '192.168.102.45:2412':
-            new_jqr_uid.append(timestamp+'_'+uid1)
+            robot_uid_time_dict[timestamp+'_'+uid1] = True
         if ai2 == '192.168.102.45:2412':
-            new_jqr_uid.append(timestamp+'_'+uid2)
+            robot_uid_time_dict[timestamp+'_'+uid2] = True
         if ai3 == '192.168.102.45:2412':
-            new_jqr_uid.append(timestamp+'_'+uid3)
+            robot_uid_time_dict[timestamp+'_'+uid3] = True
+            
+        # 人类 (192.168.102.45:2409)
+        if ai1 == '192.168.102.45:2409':
+            human_uid_time_dict[timestamp+'_'+uid1] = True
+        if ai2 == '192.168.102.45:2409':
+            human_uid_time_dict[timestamp+'_'+uid2] = True
+        if ai3 == '192.168.102.45:2409':
+            human_uid_time_dict[timestamp+'_'+uid3] = True
+
+print(f"日志处理完成。找到 {len(robot_uid_time_dict)} 个机器人记录和 {len(human_uid_time_dict)} 个人类记录。")
 
 # Define file paths
 json_file_path = r'.\\calc_double_win_rate\\188_20250526.json'
@@ -82,6 +93,7 @@ if not os.path.exists(json_file_path):
         print("Please make sure the file exists either in the 'calc_double_win_rate' directory or in the current directory.")
         exit(1)
 
+print("正在处理JSON文件...")
 with open(json_file_path, "r", encoding='gb18030', errors='ignore') as f:
     f = f.readlines()
     duiju_ls = []
@@ -92,32 +104,31 @@ with open(json_file_path, "r", encoding='gb18030', errors='ignore') as f:
             data['banker'] = 1
         else:
             data['banker'] = 0
-        # Include all entries as robot data to ensure we count all games
-        double_data_robot_ls.append(data)
         
-        # Original filtering logic - commented out
-        # time_uid_key = str(data.get('time'))+'_'+str(data.get('user_id'))
-        # if time_uid_key in new_jqr_uid:
-        #     double_data_robot_ls.append(data)
-        # else:
-        #     double_data_play_ls.append(data)
+        # 根据时间和UID标识确定是机器人还是人类数据
+        time_uid_key = str(data.get('time'))+'_'+str(data.get('user_id'))
+        if time_uid_key in robot_uid_time_dict:
+            double_data_robot_ls.append(data)
+        elif time_uid_key in human_uid_time_dict:
+            double_data_play_ls.append(data)
+        # 未匹配到的数据不处理
 
+print(f"JSON处理完成。分类了 {len(double_data_robot_ls)} 个机器人记录和 {len(double_data_play_ls)} 个人类记录。")
 
-double_play_df = pd.DataFrame([])  # Empty DataFrame since we're not using it
+double_play_df = pd.DataFrame(double_data_play_ls)
 double_robot_df = pd.DataFrame(double_data_robot_ls)
 # In[1]
-# We no longer need to filter the player data since we're counting all entries as robot data
-# double_play_df_dz = double_play_df[double_play_df['banker']==1]
-# double_play_df_nm = double_play_df[double_play_df['banker']==0]
+double_play_df_dz = double_play_df[double_play_df['banker']==1]
+double_play_df_nm = double_play_df[double_play_df['banker']==0]
 
 double_robot_df_dz = double_robot_df[double_robot_df['banker']==1]
 double_robot_df_nm = double_robot_df[double_robot_df['banker']==0]
 # In[1]
-# double_play_df_dz_lose = double_play_df_dz[double_play_df_dz['is_win'] == 0]
-# double_play_df_dz_win = double_play_df_dz[double_play_df_dz['is_win'] == 1]
+double_play_df_dz_lose = double_play_df_dz[double_play_df_dz['is_win'] == 0]
+double_play_df_dz_win = double_play_df_dz[double_play_df_dz['is_win'] == 1]
 
-# double_play_df_nm_lose = double_play_df_nm[double_play_df_nm['is_win'] == 0]
-# double_play_df_nm_win = double_play_df_nm[double_play_df_nm['is_win'] == 1]
+double_play_df_nm_lose = double_play_df_nm[double_play_df_nm['is_win'] == 0]
+double_play_df_nm_win = double_play_df_nm[double_play_df_nm['is_win'] == 1]
 # In[1]
 double_robot_df_dz_lose = double_robot_df_dz[double_robot_df_dz['is_win'] == 0]
 double_robot_df_dz_win = double_robot_df_dz[double_robot_df_dz['is_win'] == 1]
@@ -129,7 +140,23 @@ double_robot_df_dz_no_double = double_robot_df_dz[double_robot_df_dz['double_act
 double_robot_df_dz_double = double_robot_df_dz[double_robot_df_dz['double_action'] == 2]
 double_robot_df_dz_super_double = double_robot_df_dz[double_robot_df_dz['double_action'] == 4]
 
+# 打印统计信息
+print("\n数据统计:")
+print("总JSON数据条目：{}".format(len(double_play_df) + len(double_robot_df)))
+print("机器人数据条目（192.168.102.45:2412）：{}".format(len(double_robot_df)))
+print("人类数据条目（192.168.102.45:2409）：{}".format(len(double_play_df)))
+print("机器人庄家条目：{}".format(len(double_robot_df_dz)))
+print("机器人非庄家条目：{}".format(len(double_robot_df_nm)))
+print("人类庄家条目：{}".format(len(double_play_df_dz)))
+print("人类非庄家条目：{}".format(len(double_play_df_nm)))
+
+print("\n机器人加倍情况统计:")
+print("不加倍条目：{}".format(len(double_robot_df_dz_no_double)))
+print("加倍条目：{}".format(len(double_robot_df_dz_double)))
+print("超级加倍条目：{}".format(len(double_robot_df_dz_super_double)))
+
 #统计机器人不加倍、加倍和超级加倍情况下的胜率
+print("\n机器人胜率统计:")
 if len(double_robot_df_dz_no_double) > 0:
     wins = (double_robot_df_dz_no_double['is_win'] == 1).sum()
     total = len(double_robot_df_dz_no_double)
