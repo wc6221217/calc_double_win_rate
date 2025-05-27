@@ -122,21 +122,27 @@ double_robot_df_nm_win = double_robot_df_nm[double_robot_df_nm['is_win'] == 1]
 
 double_robot_df_dz_no_double = double_robot_df_dz[double_robot_df_dz['double_action'] == 1]
 double_robot_df_dz_double = double_robot_df_dz[double_robot_df_dz['double_action'] == 2]
-double_robot_df_nm_super_double = double_robot_df_nm[double_robot_df_nm['double_action'] == 4]
+double_robot_df_dz_super_double = double_robot_df_dz[double_robot_df_dz['double_action'] == 4]
 
 #统计机器人不加倍、加倍和超级加倍情况下的胜率
 if len(double_robot_df_dz_no_double) > 0:
-    print("机器人不加倍的胜率：{:.2%}".format(len(double_robot_df_dz_no_double['is_win']==1)/len(double_robot_df_dz_no_double)))
+    wins = (double_robot_df_dz_no_double['is_win'] == 1).sum()
+    total = len(double_robot_df_dz_no_double)
+    print("机器人不加倍的胜率：{:.2%} ({}/{})".format(wins/total, wins, total))
 else:
     print("机器人不加倍的胜率：无数据")
 
 if len(double_robot_df_dz_double) > 0:
-    print("机器人加倍的胜率：{:.2%}".format(len(double_robot_df_dz_double['is_win']==1)/len(double_robot_df_dz_double)))
+    wins = (double_robot_df_dz_double['is_win'] == 1).sum()
+    total = len(double_robot_df_dz_double)
+    print("机器人加倍的胜率：{:.2%} ({}/{})".format(wins/total, wins, total))
 else:
     print("机器人加倍的胜率：无数据")
 
-if len(double_robot_df_nm_super_double) > 0:
-    print("机器人超级加倍的胜率：{:.2%}".format(len(double_robot_df_nm_super_double['is_win']==1)/len(double_robot_df_nm_super_double)))
+if len(double_robot_df_dz_super_double) > 0:
+    wins = (double_robot_df_dz_super_double['is_win'] == 1).sum()
+    total = len(double_robot_df_dz_super_double)
+    print("机器人超级加倍的胜率：{:.2%} ({}/{})".format(wins/total, wins, total))
 else:
     print("机器人超级加倍的胜率：无数据")
 
