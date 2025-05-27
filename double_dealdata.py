@@ -9,7 +9,7 @@ def get_call_rob_data(file,i):
     print(i,file)
     all_data = []
     # rob_all_data = []
-    with open(r'.\\calc_double_win_rate\\logs\\{}'.format(file), "r", encoding='gb18030',errors='ignore') as f:
+    with open(r'.\\logs\\{}'.format(file), "r", encoding='gb18030',errors='ignore') as f:
     # with open(r'D:\ddz_double\ddz_double\{}'.format(file), "r", encoding='gb18030',errors='ignore') as f:
     # with open(r'E:\code\Server_Train\DDZ\ddz_bxp\datadeal\data\middle_data\game\zgdasvr\Record\{}'.format(file),
     #           "r", encoding='gb18030', errors='ignore') as f:
@@ -119,7 +119,7 @@ def get_call_rob_data(file,i):
     for index, data in enumerate(all_data):
         data_dumps = json.dumps(data)
 
-        with open(r'.\\calc_double_win_rate\\{}.json'.format(file[:-7]), 'a', encoding='utf-8') as f:
+        with open(r'.\\{}.json'.format(file[:-7]), 'a', encoding='utf-8') as f:
         # with open(r'D:\ddz_double\datadeal\{}.json'.format(file[:-7]), 'a', encoding='utf-8') as f:
             json.dump(data_dumps, f)
             f.write("\n")
@@ -137,10 +137,10 @@ if __name__ == "__main__":
     # log_files = os.listdir(r"E:\code\Server_Train\DDZ\ddz_bxp\datadeal\data\middle_data\game\zgdasvr\Record")
     # log_files = os.listdir(r"D:\jqrdouble")
     # log_files = os.listdir(r"E:\code\Server_Train\DDZ\ddz_analysis\robot_num\logs")
-    log_files = os.listdir(r".\\calc_double_win_rate\\logs")
+    log_files = os.listdir(r".\\logs")
     select_log_files = [fille for fille in log_files if fille[:3] in ['188']]
     # target_dir = 'E:\code\Server_Train\DDZ\ddz_analysis\\robot_num\double_data'
-    target_dir = '.\\calc_double_win_rate'
+    target_dir = '.\\'
 
     if not os.path.exists(target_dir):
         os.makedirs(target_dir)
