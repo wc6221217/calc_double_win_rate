@@ -9,14 +9,15 @@ import pandas as pd
 data_ls = []
 roomid = '188'
 
-double_data_play_ls = []
+double_data_old_roobt_ls = []
 double_data_robot_ls = []
 
 robot_version_data = {}
 new_jqr_uid = []
+old_jqr_uid = []
 
 # Define file paths
-log_file_path = r'.\\calc_double_win_rate\\PlayRecord20250526.log'
+log_file_path = r'.\\PlayRecord20250526.log'
 # Check if the file exists, if not, try the current directory
 if not os.path.exists(log_file_path):
     alt_log_file_path = 'PlayRecord20250526.log'
@@ -69,9 +70,15 @@ with open(log_file_path, "r", encoding='gb18030', errors='ignore') as res_file:
             new_jqr_uid.append(timestamp+'_'+uid2)
         if ai3 == '192.168.102.45:2412':
             new_jqr_uid.append(timestamp+'_'+uid3)
+        if ai1 == '192.168.102.45:2409':
+            old_jqr_uid.append(timestamp+'_'+uid1)
+        if ai2 == '192.168.102.45:2409':
+            old_jqr_uid.append(timestamp+'_'+uid2)
+        if ai3 == '192.168.102.45:2409':
+            old_jqr_uid.append(timestamp+'_'+uid3)
 
 # Define file paths
-json_file_path = r'.\\calc_double_win_rate\\188_20250526.json'
+json_file_path = r'.\\188_20250526.json'
 # Check if the file exists, if not, try the current directory
 if not os.path.exists(json_file_path):
     alt_json_file_path = '188_20250526.json'
@@ -96,23 +103,23 @@ with open(json_file_path, "r", encoding='gb18030', errors='ignore') as f:
         if time_uid_key in new_jqr_uid:
             double_data_robot_ls.append(data)
         else:
-            double_data_play_ls.append(data)
+            double_data_old_roobt_ls.append(data)
 
 
-double_play_df = pd.DataFrame(double_data_play_ls)
+double_old_robot_df = pd.DataFrame(double_data_old_roobt_ls)
 double_robot_df = pd.DataFrame(double_data_robot_ls)
 # In[1]
-double_play_df_dz = double_play_df[double_play_df['banker']==1]
-double_play_df_nm = double_play_df[double_play_df['banker']==0]
+double_old_robot_df_dz = double_old_robot_df[double_old_robot_df['banker']==1]
+double_old_robot_df_nm = double_old_robot_df[double_old_robot_df['banker']==0]
 
 double_robot_df_dz = double_robot_df[double_robot_df['banker']==1]
 double_robot_df_nm = double_robot_df[double_robot_df['banker']==0]
 # In[1]
-double_play_df_dz_lose = double_play_df_dz[double_play_df_dz['is_win'] == 0]
-double_play_df_dz_win = double_play_df_dz[double_play_df_dz['is_win'] == 1]
+double_old_robot_df_dz_lose = double_old_robot_df_dz[double_old_robot_df_dz['is_win'] == 0]
+double_old_robot_df_dz_win = double_old_robot_df_dz[double_old_robot_df_dz['is_win'] == 1]
 
-double_play_df_nm_lose = double_play_df_nm[double_play_df_nm['is_win'] == 0]
-double_play_df_nm_win = double_play_df_nm[double_play_df_nm['is_win'] == 1]
+double_old_robot_df_nm_lose = double_old_robot_df_nm[double_old_robot_df_nm['is_win'] == 0]
+double_old_robot_df_nm_win = double_old_robot_df_nm[double_old_robot_df_nm['is_win'] == 1]
 # In[1]
 double_robot_df_dz_lose = double_robot_df_dz[double_robot_df_dz['is_win'] == 0]
 double_robot_df_dz_win = double_robot_df_dz[double_robot_df_dz['is_win'] == 1]
@@ -124,27 +131,53 @@ double_robot_df_dz_no_double = double_robot_df_dz[double_robot_df_dz['double_act
 double_robot_df_dz_double = double_robot_df_dz[double_robot_df_dz['double_action'] == 2]
 double_robot_df_dz_super_double = double_robot_df_dz[double_robot_df_dz['double_action'] == 4]
 
-#统计机器人不加倍、加倍和超级加倍情况下的胜率
+double_old_robot_df_dz_no_double = double_old_robot_df_dz[double_old_robot_df_dz['double_action'] == 1]
+
+double_old_robot_df_dz_double = double_old_robot_df_dz[double_old_robot_df_dz['double_action'] == 2]
+double_old_robot_df_dz_super_double = double_old_robot_df_dz[double_old_robot_df_dz['double_action'] == 4]
+#统计新版机器人和旧版机器人在不加倍、加倍和超级加倍情况下的胜率
+
+#统计新版机器人不加倍、加倍和超级加倍情况下的胜率
 if len(double_robot_df_dz_no_double) > 0:
     wins = (double_robot_df_dz_no_double['is_win'] == 1).sum()
     total = len(double_robot_df_dz_no_double)
-    print("机器人不加倍的胜率：{:.2%} ({}/{})".format(wins/total, wins, total))
+    print("新版机器人不加倍的胜率：{:.2%} ({}/{})".format(wins/total, wins, total))
 else:
-    print("机器人不加倍的胜率：无数据")
+    print("新版机器人不加倍的胜率：无数据")
 
 if len(double_robot_df_dz_double) > 0:
     wins = (double_robot_df_dz_double['is_win'] == 1).sum()
     total = len(double_robot_df_dz_double)
-    print("机器人加倍的胜率：{:.2%} ({}/{})".format(wins/total, wins, total))
+    print("新版机器人加倍的胜率：{:.2%} ({}/{})".format(wins/total, wins, total))
 else:
-    print("机器人加倍的胜率：无数据")
+    print("新版机器人加倍的胜率：无数据")
 
 if len(double_robot_df_dz_super_double) > 0:
     wins = (double_robot_df_dz_super_double['is_win'] == 1).sum()
     total = len(double_robot_df_dz_super_double)
-    print("机器人超级加倍的胜率：{:.2%} ({}/{})".format(wins/total, wins, total))
+    print("新版机器人超级加倍的胜率：{:.2%} ({}/{})".format(wins/total, wins, total))
 else:
-    print("机器人超级加倍的胜率：无数据")
+    print("新版机器人超级加倍的胜率：无数据")
+
+#统计旧版机器人不加倍、加倍和超级加倍情况下的胜率
+if len(double_old_robot_df_dz_no_double) > 0:
+    wins = (double_old_robot_df_dz_no_double['is_win'] == 1).sum()
+    total = len(double_old_robot_df_dz_no_double)
+    print("旧版机器人不加倍的胜率：{:.2%} ({}/{})".format(wins/total, wins, total))
+else:
+    print("旧版机器人不加倍的胜率：无数据")
+
+if len(double_old_robot_df_dz_double) > 0:
+    wins = (double_old_robot_df_dz_double['is_win'] == 1).sum()
+    total = len(double_old_robot_df_dz_double)
+    print("旧版机器人加倍的胜率：{:.2%} ({}/{})".format(wins/total, wins, total))
+else:
+    print("旧版机器人加倍的胜率：无数据")
+
+if len(double_old_robot_df_dz_super_double) > 0:
+    wins = (double_old_robot_df_dz_super_double['is_win'] == 1).sum()
+    total = len(double_old_robot_df_dz_super_double)
+    print("旧版机器人超级加倍的胜率：{:.2%} ({}/{})".format(wins/total, wins, total))
 
 
 

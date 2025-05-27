@@ -107,7 +107,7 @@ def get_call_rob_data(file,i):
                         'his_double': copy.deepcopy(double_label_dict),
                         'double_action': double_action,
                         'time':timestamp,
-                        'key':file[6:14]+'_'+str(timestamp)+'_'+str(chairno_dic[int(linels[1])])
+                        'key':str(timestamp)+'_'+str(chairno_dic[int(linels[1])])
                     }
                     double_data.append(data)
 
