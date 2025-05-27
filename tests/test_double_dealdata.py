@@ -26,7 +26,7 @@ Call 0 0
 Call 2 1
 Rob 0 0
 Rob 1 0
-Bottom 2 [X53]
+Bottom 2 [X5S3D]
 Double 0 0
 Double 1 0
 Double 2 2
@@ -91,7 +91,7 @@ Version 1.0
             
             # Check specific values
             assert data['time'] == '1748241244'
-            assert data['bottom'] == 'X3'
+            assert data['bottom'] == 'XSD'
             assert isinstance(data['double_action'], int)
             assert isinstance(data['is_win'], int)
     
