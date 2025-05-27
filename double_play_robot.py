@@ -180,6 +180,8 @@ if len(double_old_robot_df_dz_super_double) > 0:
     print("旧版机器人超级加倍的胜率：{:.2%} ({}/{})".format(wins/total, wins, total))
 
 
-
+#统计新版和旧版机器人在不同加倍动作下的净赢银
+#其中机器人的加倍动作在188_20250526.json中double_action标签中
+#其中净赢银数据在PlayRecord20250526.log中每一行用逗号分割后的第14、24、34行
 
 
