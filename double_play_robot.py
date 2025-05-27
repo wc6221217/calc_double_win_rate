@@ -15,6 +15,8 @@ double_data_robot_ls = []
 robot_version_data = {}
 new_jqr_uid = []
 old_jqr_uid = []
+# 存储净赢银数据的字典
+net_win_data = {}
 
 # Define file paths
 log_file_path = r'.\\PlayRecord20250526.log'
@@ -66,16 +68,28 @@ with open(log_file_path, "r", encoding='gb18030', errors='ignore') as res_file:
         # print(deposit1, deposit2, deposit3)
         if ai1 == '192.168.102.45:2412':
             new_jqr_uid.append(timestamp+'_'+uid1)
+            # 存储净赢银数据
+            net_win_data[timestamp+'_'+uid1] = deposit1
         if ai2 == '192.168.102.45:2412':
             new_jqr_uid.append(timestamp+'_'+uid2)
+            # 存储净赢银数据
+            net_win_data[timestamp+'_'+uid2] = deposit2
         if ai3 == '192.168.102.45:2412':
             new_jqr_uid.append(timestamp+'_'+uid3)
+            # 存储净赢银数据
+            net_win_data[timestamp+'_'+uid3] = deposit3
         if ai1 == '192.168.102.45:2409':
             old_jqr_uid.append(timestamp+'_'+uid1)
+            # 存储净赢银数据
+            net_win_data[timestamp+'_'+uid1] = deposit1
         if ai2 == '192.168.102.45:2409':
             old_jqr_uid.append(timestamp+'_'+uid2)
+            # 存储净赢银数据
+            net_win_data[timestamp+'_'+uid2] = deposit2
         if ai3 == '192.168.102.45:2409':
             old_jqr_uid.append(timestamp+'_'+uid3)
+            # 存储净赢银数据
+            net_win_data[timestamp+'_'+uid3] = deposit3
 
 # Define file paths
 json_file_path = r'.\\188_20250526.json'
@@ -100,6 +114,12 @@ with open(json_file_path, "r", encoding='gb18030', errors='ignore') as f:
         else:
             data['banker'] = 0
         time_uid_key = str(data.get('time'))+'_'+str(data.get('user_id'))
+        # 添加净赢银数据
+        if time_uid_key in net_win_data:
+            data['net_win'] = net_win_data[time_uid_key]
+        else:
+            data['net_win'] = 0
+            
         if time_uid_key in new_jqr_uid:
             double_data_robot_ls.append(data)
         else:
@@ -184,4 +204,45 @@ if len(double_old_robot_df_dz_super_double) > 0:
 #其中机器人的加倍动作在188_20250526.json中double_action标签中
 #其中净赢银数据在PlayRecord20250526.log中每一行用逗号分割后的第14、24、34行
 
+print("\n=== 净赢银统计结果 ===")
+print("新版机器人：")
 
+# 统计新版机器人不同加倍动作下的净赢银
+if len(double_robot_df_dz_no_double) > 0:
+    net_win_total = double_robot_df_dz_no_double['net_win'].sum()
+    print(f"  不加倍(1): 净赢银总计 = {net_win_total:,}")
+else:
+    print("  不加倍(1): 净赢银总计 = 无数据")
+
+if len(double_robot_df_dz_double) > 0:
+    net_win_total = double_robot_df_dz_double['net_win'].sum()
+    print(f"  加倍(2): 净赢银总计 = {net_win_total:,}")
+else:
+    print("  加倍(2): 净赢银总计 = 无数据")
+
+if len(double_robot_df_dz_super_double) > 0:
+    net_win_total = double_robot_df_dz_super_double['net_win'].sum()
+    print(f"  超级加倍(4): 净赢银总计 = {net_win_total:,}")
+else:
+    print("  超级加倍(4): 净赢银总计 = 无数据")
+
+print("\n旧版机器人：")
+
+# 统计旧版机器人不同加倍动作下的净赢银
+if len(double_old_robot_df_dz_no_double) > 0:
+    net_win_total = double_old_robot_df_dz_no_double['net_win'].sum()
+    print(f"  不加倍(1): 净赢银总计 = {net_win_total:,}")
+else:
+    print("  不加倍(1): 净赢银总计 = 无数据")
+
+if len(double_old_robot_df_dz_double) > 0:
+    net_win_total = double_old_robot_df_dz_double['net_win'].sum()
+    print(f"  加倍(2): 净赢银总计 = {net_win_total:,}")
+else:
+    print("  加倍(2): 净赢银总计 = 无数据")
+
+if len(double_old_robot_df_dz_super_double) > 0:
+    net_win_total = double_old_robot_df_dz_super_double['net_win'].sum()
+    print(f"  超级加倍(4): 净赢银总计 = {net_win_total:,}")
+else:
+    print("  超级加倍(4): 净赢银总计 = 无数据")
