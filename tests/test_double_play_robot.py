@@ -147,3 +147,98 @@ class TestDoublePlayRobot:
         if len(df_super_double) > 0:
             net_win_total = df_super_double['net_win'].sum()
             assert net_win_total == 500  # Just 500
+    
+    def test_calculate_net_win_stats(self):
+        """Test the calculate_net_win_stats function."""
+        # Create test data
+        test_data = [
+            {'is_win': 1, 'net_win': 100},
+            {'is_win': 0, 'net_win': -50},
+            {'is_win': 1, 'net_win': 200},
+            {'is_win': 0, 'net_win': -150},
+            {'is_win': 1, 'net_win': 300},
+        ]
+        
+        # Convert to DataFrame
+        df = pd.DataFrame(test_data)
+        
+        # Calculate statistics
+        stats = double_play_robot.calculate_net_win_stats(df)
+        
+        # Verify results
+        assert stats['total'] == 400  # Sum of all net wins
+        assert stats['count'] == 5    # Total number of games
+        assert stats['avg'] == 80     # Average net win (400/5)
+        assert stats['wins'] == 3     # Number of wins
+        assert stats['losses'] == 2   # Number of losses
+        assert stats['win_total'] == 600  # Sum of net wins for winning games
+        assert stats['loss_total'] == -200  # Sum of net wins for losing games
+        assert stats['win_avg'] == 200  # Average net win for winning games
+        assert stats['loss_avg'] == -100  # Average net win for losing games
+        assert round(stats['std'], 2) == 182.35  # Standard deviation (rounded)
+        
+    def test_generate_net_win_report(self):
+        """Test the generate_net_win_report function."""
+        # Create test data for new and old robot
+        new_robot_no_double = pd.DataFrame([
+            {'is_win': 1, 'net_win': 100},
+            {'is_win': 0, 'net_win': -50}
+        ])
+        
+        new_robot_double = pd.DataFrame([
+            {'is_win': 1, 'net_win': 200},
+            {'is_win': 1, 'net_win': 300}
+        ])
+        
+        new_robot_super_double = pd.DataFrame([
+            {'is_win': 1, 'net_win': 500}
+        ])
+        
+        old_robot_no_double = pd.DataFrame([
+            {'is_win': 0, 'net_win': -100},
+            {'is_win': 1, 'net_win': 50}
+        ])
+        
+        old_robot_double = pd.DataFrame([
+            {'is_win': 0, 'net_win': -150},
+            {'is_win': 1, 'net_win': 100}
+        ])
+        
+        old_robot_super_double = pd.DataFrame([
+            {'is_win': 0, 'net_win': -200}
+        ])
+        
+        # Prepare input for the function
+        new_robot_dfs = {
+            'no_double': new_robot_no_double,
+            'double': new_robot_double,
+            'super_double': new_robot_super_double
+        }
+        
+        old_robot_dfs = {
+            'no_double': old_robot_no_double,
+            'double': old_robot_double,
+            'super_double': old_robot_super_double
+        }
+        
+        # Generate report
+        stats = double_play_robot.generate_net_win_report(new_robot_dfs, old_robot_dfs)
+        
+        # Verify some key results
+        assert stats['new_robot']['total']['total'] == 1050  # Sum of all new robot net wins
+        assert stats['old_robot']['total']['total'] == -300  # Sum of all old robot net wins
+        assert stats['difference']['total']['total'] == 1350  # Difference in total net wins
+        
+        # Check detailed stats for new robot's double action
+        assert stats['new_robot']['double']['total'] == 500
+        assert stats['new_robot']['double']['count'] == 2
+        assert stats['new_robot']['double']['avg'] == 250
+        assert stats['new_robot']['double']['wins'] == 2
+        assert stats['new_robot']['double']['losses'] == 0
+        
+        # Check detailed stats for old robot's no_double action
+        assert stats['old_robot']['no_double']['total'] == -50
+        assert stats['old_robot']['no_double']['count'] == 2
+        assert stats['old_robot']['no_double']['avg'] == -25
+        assert stats['old_robot']['no_double']['wins'] == 1
+        assert stats['old_robot']['no_double']['losses'] == 1
