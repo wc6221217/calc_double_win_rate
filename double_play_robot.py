@@ -14,7 +14,20 @@ double_data_robot_ls = []
 
 robot_version_data = {}
 new_jqr_uid = []
-with open(r'.\\calc_double_win_rate\\PlayRecord20250526.log', "r",encoding='gb18030', errors='ignore') as res_file:
+
+# Define file paths
+log_file_path = r'.\\calc_double_win_rate\\PlayRecord20250526.log'
+# Check if the file exists, if not, try the current directory
+if not os.path.exists(log_file_path):
+    alt_log_file_path = 'PlayRecord20250526.log'
+    if os.path.exists(alt_log_file_path):
+        log_file_path = alt_log_file_path
+    else:
+        print(f"Error: The required log file 'PlayRecord20250526.log' was not found.")
+        print("Please make sure the file exists either in the 'calc_double_win_rate' directory or in the current directory.")
+        exit(1)
+
+with open(log_file_path, "r", encoding='gb18030', errors='ignore') as res_file:
     next(res_file)
     for line in res_file:
         if len(line.strip()) == 0:
@@ -57,8 +70,19 @@ with open(r'.\\calc_double_win_rate\\PlayRecord20250526.log', "r",encoding='gb18
         if ai3 == '192.168.102.45:2412':
             new_jqr_uid.append(timestamp+'_'+uid3)
 
-with open(r'.\\calc_double_win_rate\\188_20250526.json', "r",
-            encoding='gb18030', errors='ignore') as f:
+# Define file paths
+json_file_path = r'.\\calc_double_win_rate\\188_20250526.json'
+# Check if the file exists, if not, try the current directory
+if not os.path.exists(json_file_path):
+    alt_json_file_path = '188_20250526.json'
+    if os.path.exists(alt_json_file_path):
+        json_file_path = alt_json_file_path
+    else:
+        print(f"Error: The required JSON file '188_20250526.json' was not found.")
+        print("Please make sure the file exists either in the 'calc_double_win_rate' directory or in the current directory.")
+        exit(1)
+
+with open(json_file_path, "r", encoding='gb18030', errors='ignore') as f:
     f = f.readlines()
     duiju_ls = []
     for i, line in enumerate(f):
