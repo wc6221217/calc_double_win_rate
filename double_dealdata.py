@@ -5,11 +5,11 @@ from collections import deque
 
 import pandas as pd
 # jqr_uid = pd.read_csv(r'E:\code\Server_Train\DDZ\ddz_analysis\robot_num\data\22042robotuid.csv')['uid'].to_list()
-def get_call_rob_data(file,i):
+def get_call_rob_data(file, i, logs_dir='.\\logs', output_dir='.\\'):
     print(i,file)
     all_data = []
     # rob_all_data = []
-    with open(r'.\\logs\\{}'.format(file), "r", encoding='gb18030',errors='ignore') as f:
+    with open(os.path.join(logs_dir, file), "r", encoding='gb18030',errors='ignore') as f:
     # with open(r'D:\ddz_double\ddz_double\{}'.format(file), "r", encoding='gb18030',errors='ignore') as f:
     # with open(r'E:\code\Server_Train\DDZ\ddz_bxp\datadeal\data\middle_data\game\zgdasvr\Record\{}'.format(file),
     #           "r", encoding='gb18030', errors='ignore') as f:
@@ -113,13 +113,13 @@ def get_call_rob_data(file,i):
 
                 double_label_dict[int(linels[1])] = int(linels[2])
 
-            if linels[0] == 'Throw' or 'AutoThrow':
+            if linels[0] == 'Throw' or linels[0] == 'AutoThrow':
                 throw_chair.append(linels[1])
 
     for index, data in enumerate(all_data):
         data_dumps = json.dumps(data)
 
-        with open(r'.\\{}.json'.format(file[:-7]), 'a', encoding='utf-8') as f:
+        with open(os.path.join(output_dir, f"{file[:-7]}.json"), 'a', encoding='utf-8') as f:
         # with open(r'D:\ddz_double\datadeal\{}.json'.format(file[:-7]), 'a', encoding='utf-8') as f:
             json.dump(data_dumps, f)
             f.write("\n")
@@ -148,7 +148,7 @@ if __name__ == "__main__":
     print(len(select_log_files))
     pool = mp.Pool(4)
     for i, log_file in enumerate(select_log_files):
-        pool.apply_async(get_call_rob_data,args=(log_file, i))
+        pool.apply_async(get_call_rob_data,args=(log_file, i, r'.\\logs', target_dir))
 
 
     pool.close()
