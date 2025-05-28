@@ -242,3 +242,142 @@ class TestDoublePlayRobot:
         assert stats['old_robot']['no_double']['avg'] == -25
         assert stats['old_robot']['no_double']['wins'] == 1
         assert stats['old_robot']['no_double']['losses'] == 1
+        
+    def test_export_json(self):
+        """Test the export_stats_to_json function."""
+        # Create simple test data
+        test_stats = {
+            'new_robot': {
+                'total': {'total': 100, 'avg': 50}
+            },
+            'old_robot': {
+                'total': {'total': -50, 'avg': -25}
+            },
+            'difference': {
+                'total': {'total': 150, 'avg': 75}
+            }
+        }
+        
+        # Create a temporary file for testing
+        with tempfile.NamedTemporaryFile(suffix='.json', delete=False) as tmp:
+            tmp_path = tmp.name
+        
+        try:
+            # Export to JSON
+            double_play_robot.export_stats_to_json(test_stats, tmp_path)
+            
+            # Read back and verify
+            with open(tmp_path, 'r', encoding='utf-8') as f:
+                loaded_stats = json.load(f)
+            
+            assert loaded_stats['new_robot']['total']['total'] == 100
+            assert loaded_stats['old_robot']['total']['total'] == -50
+            assert loaded_stats['difference']['total']['total'] == 150
+        finally:
+            # Clean up
+            if os.path.exists(tmp_path):
+                os.unlink(tmp_path)
+    
+    def test_visualization_functions(self):
+        """Test the visualization functions."""
+        # Create simple test data
+        test_stats = {
+            'new_robot': {
+                'no_double': {'total': 100, 'avg': 50, 'count': 2, 'wins': 1, 'losses': 1},
+                'double': {'total': 200, 'avg': 100, 'count': 2, 'wins': 2, 'losses': 0},
+                'super_double': {'total': 300, 'avg': 300, 'count': 1, 'wins': 1, 'losses': 0},
+                'total': {'total': 600, 'avg': 120, 'count': 5, 'wins': 4, 'losses': 1}
+            },
+            'old_robot': {
+                'no_double': {'total': -50, 'avg': -25, 'count': 2, 'wins': 1, 'losses': 1},
+                'double': {'total': -100, 'avg': -50, 'count': 2, 'wins': 1, 'losses': 1},
+                'super_double': {'total': -150, 'avg': -150, 'count': 1, 'wins': 0, 'losses': 1},
+                'total': {'total': -300, 'avg': -60, 'count': 5, 'wins': 2, 'losses': 3}
+            },
+            'difference': {
+                'no_double': {'total': 150, 'avg': 75, 'win_rate': 0, 'win_avg': 0, 'loss_avg': 0},
+                'double': {'total': 300, 'avg': 150, 'win_rate': 0.5, 'win_avg': 0, 'loss_avg': 0},
+                'super_double': {'total': 450, 'avg': 450, 'win_rate': 1.0, 'win_avg': 0, 'loss_avg': 0},
+                'total': {'total': 900, 'avg': 180, 'win_rate': 0.4, 'win_avg': 0, 'loss_avg': 0}
+            }
+        }
+        
+        # Test net win comparison visualization
+        fig1 = double_play_robot.visualize_net_win_comparison(test_stats)
+        assert fig1 is not None
+        
+        # Test win rate comparison visualization
+        fig2 = double_play_robot.visualize_win_rate_comparison(test_stats)
+        assert fig2 is not None
+        
+        # Test with output file
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            net_win_path = os.path.join(tmp_dir, 'net_win.png')
+            win_rate_path = os.path.join(tmp_dir, 'win_rate.png')
+            
+            fig1 = double_play_robot.visualize_net_win_comparison(test_stats, net_win_path)
+            fig2 = double_play_robot.visualize_win_rate_comparison(test_stats, win_rate_path)
+            
+            assert os.path.exists(net_win_path)
+            assert os.path.exists(win_rate_path)
+    
+    def test_analyze_and_visualize(self):
+        """Test the analyze_and_visualize function."""
+        # Create test data for new and old robot
+        new_robot_no_double = pd.DataFrame([
+            {'is_win': 1, 'net_win': 100},
+            {'is_win': 0, 'net_win': -50}
+        ])
+        
+        new_robot_double = pd.DataFrame([
+            {'is_win': 1, 'net_win': 200},
+            {'is_win': 1, 'net_win': 300}
+        ])
+        
+        new_robot_super_double = pd.DataFrame([
+            {'is_win': 1, 'net_win': 500}
+        ])
+        
+        old_robot_no_double = pd.DataFrame([
+            {'is_win': 0, 'net_win': -100},
+            {'is_win': 1, 'net_win': 50}
+        ])
+        
+        old_robot_double = pd.DataFrame([
+            {'is_win': 0, 'net_win': -150},
+            {'is_win': 1, 'net_win': 100}
+        ])
+        
+        old_robot_super_double = pd.DataFrame([
+            {'is_win': 0, 'net_win': -200}
+        ])
+        
+        # Prepare input for the function
+        new_robot_dfs = {
+            'no_double': new_robot_no_double,
+            'double': new_robot_double,
+            'super_double': new_robot_super_double
+        }
+        
+        old_robot_dfs = {
+            'no_double': old_robot_no_double,
+            'double': old_robot_double,
+            'super_double': old_robot_super_double
+        }
+        
+        # Test without output directory
+        result = double_play_robot.analyze_and_visualize(new_robot_dfs, old_robot_dfs)
+        assert 'statistics' in result
+        assert 'visualizations' in result
+        assert 'net_win' in result['visualizations']
+        assert 'win_rate' in result['visualizations']
+        
+        # Test with output directory
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            result = double_play_robot.analyze_and_visualize(new_robot_dfs, old_robot_dfs, tmp_dir)
+            
+            # Check that files were created
+            assert os.path.exists(os.path.join(tmp_dir, 'net_win_comparison.png'))
+            assert os.path.exists(os.path.join(tmp_dir, 'win_rate_comparison.png'))
+            assert os.path.exists(os.path.join(tmp_dir, 'net_win_statistics.csv'))
+            assert os.path.exists(os.path.join(tmp_dir, 'net_win_statistics.json'))

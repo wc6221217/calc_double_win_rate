@@ -3,8 +3,10 @@
 import pandas as pd
 # jqr_uid = pd.read_csv(r'E:\code\Server_Train\DDZ\ddz_analysis\robot_num\data\22042robotuid.csv')['uid'].to_list()
 # In[1]
-import json,os
+import json, os
 import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
 # files_ls = os.listdir(r".\\calc_double_win_rate\\double_data")
 data_ls = []
 roomid = '188'
@@ -340,6 +342,60 @@ def generate_net_win_report(new_robot_dfs, old_robot_dfs, output_csv=None):
     
     return net_win_stats
 
+def analyze_and_visualize(new_robot_dfs, old_robot_dfs, output_dir=None):
+    """
+    进行全面分析并生成可视化结果
+    
+    Args:
+        new_robot_dfs (dict): 新版机器人数据，包含 'no_double', 'double', 'super_double' 三个DataFrame
+        old_robot_dfs (dict): 旧版机器人数据，包含 'no_double', 'double', 'super_double' 三个DataFrame
+        output_dir (str, optional): 输出目录，如果提供则将所有结果保存到该目录
+        
+    Returns:
+        dict: 包含统计结果和图表的字典
+    """
+    # 如果提供了输出目录，确保它存在
+    if output_dir:
+        os.makedirs(output_dir, exist_ok=True)
+    
+    # 计算统计数据
+    stats = generate_net_win_report(new_robot_dfs, old_robot_dfs)
+    
+    # 准备结果容器
+    result = {
+        'statistics': stats,
+        'visualizations': {}
+    }
+    
+    # 创建并保存可视化图表
+    if output_dir:
+        # 净赢银对比图
+        net_win_fig = visualize_net_win_comparison(
+            stats, 
+            os.path.join(output_dir, 'net_win_comparison.png')
+        )
+        result['visualizations']['net_win'] = net_win_fig
+        
+        # 胜率对比图
+        win_rate_fig = visualize_win_rate_comparison(
+            stats, 
+            os.path.join(output_dir, 'win_rate_comparison.png')
+        )
+        result['visualizations']['win_rate'] = win_rate_fig
+        
+        # 导出CSV和JSON
+        export_stats_to_csv(stats, os.path.join(output_dir, 'net_win_statistics.csv'))
+        export_stats_to_json(stats, os.path.join(output_dir, 'net_win_statistics.json'))
+    else:
+        # 不保存文件，只生成图表对象
+        result['visualizations']['net_win'] = visualize_net_win_comparison(stats)
+        result['visualizations']['win_rate'] = visualize_win_rate_comparison(stats)
+    
+    # 打印详细报告
+    print_enhanced_net_win_report(stats)
+    
+    return result
+
 def export_stats_to_csv(stats, output_file):
     """
     将统计数据导出到CSV文件
@@ -405,7 +461,35 @@ def export_stats_to_csv(stats, output_file):
     # 创建DataFrame并导出
     df = pd.DataFrame(rows)
     df.to_csv(output_file, index=False, encoding='utf-8-sig')
-    print(f"统计数据已导出到: {os.path.abspath(output_file)}")
+    print(f"统计数据已导出到CSV文件: {os.path.abspath(output_file)}")
+
+def export_stats_to_json(stats, output_file):
+    """
+    将统计数据导出到JSON文件
+    
+    Args:
+        stats (dict): 统计数据
+        output_file (str): 输出文件路径
+    """
+    import json
+    import os
+    import numpy as np
+    
+    # 创建一个自定义的JSON编码器，处理numpy类型
+    class NumpyEncoder(json.JSONEncoder):
+        def default(self, obj):
+            if isinstance(obj, (np.integer, np.int64)):
+                return int(obj)
+            elif isinstance(obj, (np.floating, np.float64)):
+                return float(obj)
+            elif isinstance(obj, np.ndarray):
+                return obj.tolist()
+            return super(NumpyEncoder, self).default(obj)
+    
+    with open(output_file, 'w', encoding='utf-8') as f:
+        json.dump(stats, f, ensure_ascii=False, indent=2, cls=NumpyEncoder)
+    
+    print(f"统计数据已导出到JSON文件: {os.path.abspath(output_file)}")
 
 def format_number(number, comma=True, precision=2):
     """格式化数字，用于显示"""
@@ -421,6 +505,151 @@ def format_number(number, comma=True, precision=2):
             else:
                 return f"{number:.{precision}f}"
     return str(number)
+
+def visualize_net_win_comparison(stats, output_file=None):
+    """
+    创建净赢银对比的可视化图表
+    
+    Args:
+        stats (dict): 由generate_net_win_report生成的统计数据
+        output_file (str, optional): 输出文件路径，如果提供则保存图表
+    
+    Returns:
+        matplotlib.figure.Figure: 生成的图表
+    """
+    # 设置图表样式
+    sns.set(style="whitegrid")
+    
+    # 创建图表和子图
+    fig, ax = plt.subplots(figsize=(12, 8))
+    
+    # 准备数据
+    categories = ['不加倍', '加倍', '超级加倍', '总计']
+    actions = ['no_double', 'double', 'super_double', 'total']
+    
+    new_robot_avg = [stats['new_robot'][action]['avg'] for action in actions]
+    old_robot_avg = [stats['old_robot'][action]['avg'] for action in actions]
+    
+    # 设置条形图位置
+    x = range(len(categories))
+    width = 0.35
+    
+    # 绘制条形图
+    rects1 = ax.bar([i - width/2 for i in x], new_robot_avg, width, label='新版机器人')
+    rects2 = ax.bar([i + width/2 for i in x], old_robot_avg, width, label='旧版机器人')
+    
+    # 添加数据标签
+    def add_labels(rects):
+        for rect in rects:
+            height = rect.get_height()
+            label_height = height if height >= 0 else height - 20
+            ax.annotate(f'{height:.1f}',
+                        xy=(rect.get_x() + rect.get_width() / 2, label_height),
+                        xytext=(0, 3 if height >= 0 else -15),
+                        textcoords="offset points",
+                        ha='center', va='bottom')
+    
+    add_labels(rects1)
+    add_labels(rects2)
+    
+    # 添加图表元素
+    ax.set_title('不同加倍动作下的平均净赢银对比', fontsize=16)
+    ax.set_xlabel('加倍动作类型', fontsize=12)
+    ax.set_ylabel('平均净赢银', fontsize=12)
+    ax.set_xticks(x)
+    ax.set_xticklabels(categories)
+    ax.legend()
+    
+    # 添加网格线
+    ax.grid(True, linestyle='--', alpha=0.7)
+    
+    # 调整布局
+    plt.tight_layout()
+    
+    # 保存图表
+    if output_file:
+        plt.savefig(output_file, dpi=300, bbox_inches='tight')
+        print(f"净赢银对比图表已保存到: {os.path.abspath(output_file)}")
+    
+    return fig
+
+def visualize_win_rate_comparison(stats, output_file=None):
+    """
+    创建胜率对比的可视化图表
+    
+    Args:
+        stats (dict): 由generate_net_win_report生成的统计数据
+        output_file (str, optional): 输出文件路径，如果提供则保存图表
+    
+    Returns:
+        matplotlib.figure.Figure: 生成的图表
+    """
+    # 设置图表样式
+    sns.set(style="whitegrid")
+    
+    # 创建图表和子图
+    fig, ax = plt.subplots(figsize=(12, 8))
+    
+    # 准备数据
+    categories = ['不加倍', '加倍', '超级加倍', '总计']
+    actions = ['no_double', 'double', 'super_double', 'total']
+    
+    new_robot_win_rates = [
+        stats['new_robot'][action]['wins'] / stats['new_robot'][action]['count'] 
+        if stats['new_robot'][action]['count'] > 0 else 0 
+        for action in actions
+    ]
+    old_robot_win_rates = [
+        stats['old_robot'][action]['wins'] / stats['old_robot'][action]['count'] 
+        if stats['old_robot'][action]['count'] > 0 else 0 
+        for action in actions
+    ]
+    
+    # 转换为百分比
+    new_robot_win_rates = [rate * 100 for rate in new_robot_win_rates]
+    old_robot_win_rates = [rate * 100 for rate in old_robot_win_rates]
+    
+    # 设置条形图位置
+    x = range(len(categories))
+    width = 0.35
+    
+    # 绘制条形图
+    rects1 = ax.bar([i - width/2 for i in x], new_robot_win_rates, width, label='新版机器人')
+    rects2 = ax.bar([i + width/2 for i in x], old_robot_win_rates, width, label='旧版机器人')
+    
+    # 添加数据标签
+    def add_labels(rects):
+        for rect in rects:
+            height = rect.get_height()
+            ax.annotate(f'{height:.1f}%',
+                        xy=(rect.get_x() + rect.get_width() / 2, height),
+                        xytext=(0, 3),
+                        textcoords="offset points",
+                        ha='center', va='bottom')
+    
+    add_labels(rects1)
+    add_labels(rects2)
+    
+    # 添加图表元素
+    ax.set_title('不同加倍动作下的胜率对比', fontsize=16)
+    ax.set_xlabel('加倍动作类型', fontsize=12)
+    ax.set_ylabel('胜率 (%)', fontsize=12)
+    ax.set_xticks(x)
+    ax.set_xticklabels(categories)
+    ax.legend()
+    
+    # 添加网格线
+    ax.grid(True, linestyle='--', alpha=0.7)
+    
+    # 调整布局
+    plt.tight_layout()
+    
+    # 保存图表
+    if output_file:
+        plt.savefig(output_file, dpi=300, bbox_inches='tight')
+        print(f"胜率对比图表已保存到: {os.path.abspath(output_file)}")
+    
+    return fig
 
 def print_enhanced_net_win_report(stats):
     """
@@ -536,31 +765,31 @@ else:
     print("  超级加倍(4): 净赢银总计 = 无数据")
 
 
-# 使用增强版净赢银统计功能
-print("\n开始生成增强版净赢银统计...")
-
-# 整理数据结构以供统计函数使用
-new_robot_dfs = {
-    'no_double': double_robot_df_dz_no_double,
-    'double': double_robot_df_dz_double,
-    'super_double': double_robot_df_dz_super_double
-}
-
-old_robot_dfs = {
-    'no_double': double_old_robot_df_dz_no_double,
-    'double': double_old_robot_df_dz_double,
-    'super_double': double_old_robot_df_dz_super_double
-}
-
-# 生成统计报告
-net_win_stats = generate_net_win_report(new_robot_dfs, old_robot_dfs)
-
-# 打印增强版报告
-print_enhanced_net_win_report(net_win_stats)
-
-# 导出CSV文件
-try:
-    export_stats_to_csv(net_win_stats, "net_win_statistics.csv")
-except Exception as e:
-    print(f"导出CSV文件时出错: {e}")
-    print("请确保有写入权限或尝试使用绝对路径。")
+# 如果是直接运行脚本
+if __name__ == "__main__":
+    # 使用增强版净赢银统计功能
+    print("\n开始生成增强版净赢银统计...")
+    
+    # 整理数据结构以供统计函数使用
+    new_robot_dfs = {
+        'no_double': double_robot_df_dz_no_double,
+        'double': double_robot_df_dz_double,
+        'super_double': double_robot_df_dz_super_double
+    }
+    
+    old_robot_dfs = {
+        'no_double': double_old_robot_df_dz_no_double,
+        'double': double_old_robot_df_dz_double,
+        'super_double': double_old_robot_df_dz_super_double
+    }
+    
+    # 创建输出目录
+    output_dir = "robot_analysis_results"
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+    
+    # 进行全面分析并生成可视化结果
+    print("\n开始进行全面分析并生成可视化结果...")
+    analysis_result = analyze_and_visualize(new_robot_dfs, old_robot_dfs, output_dir)
+    
+    print("\n分析完成，结果已保存到目录:", os.path.abspath(output_dir))
